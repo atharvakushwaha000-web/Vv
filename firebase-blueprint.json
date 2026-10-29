@@ -1,0 +1,324 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile and settings",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "User UID" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "description": "User email" },
+        "photoUrl": { "type": "string", "description": "Avatar URL" },
+        "referralCode": { "type": "string", "description": "Unique referral code" },
+        "referredBy": { "type": "string", "description": "Optional referrer code" },
+        "accountStatus": { "type": "string", "enum": ["active", "suspended", "banned", "pending_deletion"] },
+        "role": { "type": "string", "enum": ["user", "superAdmin", "campaignManager", "contentModerator", "financeAdmin", "support", "analyst"] },
+        "ageVerified18Plus": { "type": "boolean" },
+        "country": { "type": "string" },
+        "notificationsEnabled": { "type": "boolean" },
+        "quietHoursEnabled": { "type": "boolean" },
+        "checkInStreak": { "type": "integer" },
+        "lastCheckInDate": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "referralCode", "accountStatus", "role", "ageVerified18Plus", "createdAt", "updatedAt"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "User coin balances",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "available": { "type": "integer" },
+        "pending": { "type": "integer" },
+        "lifetimeEarned": { "type": "integer" },
+        "redeemed": { "type": "integer" },
+        "sandboxCoins": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "available", "pending", "lifetimeEarned", "redeemed", "sandboxCoins", "updatedAt"]
+    },
+    "LedgerEntry": {
+      "title": "LedgerEntry",
+      "description": "Immutable append-only reward transaction ledger entry",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "eventId": { "type": "string" },
+        "sourceType": { "type": "string" },
+        "sourceId": { "type": "string" },
+        "title": { "type": "string" },
+        "amount": { "type": "integer" },
+        "transactionType": { "type": "string", "enum": ["earn", "reserve", "release", "spend", "reversal", "adjustment"] },
+        "verificationStatus": { "type": "string", "enum": ["pending", "approved", "rejected", "reversed"] },
+        "verificationLevel": { "type": "string", "enum": ["server_verified", "s2s_verified", "client_attested", "manual_review", "test_mode"] },
+        "idempotencyKey": { "type": "string" },
+        "balanceAfter": { "type": "integer" },
+        "actor": { "type": "string" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "eventId", "sourceType", "sourceId", "title", "amount", "transactionType", "verificationStatus", "verificationLevel", "idempotencyKey", "balanceAfter", "actor", "createdAt"]
+    },
+    "IdempotencyRecord": {
+      "title": "IdempotencyRecord",
+      "description": "Global idempotency lock preventing duplicate rewards",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "txId": { "type": "string" },
+        "sourceType": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "txId", "sourceType", "createdAt"]
+    },
+    "AppCampaign": {
+      "title": "AppCampaign",
+      "description": "Sponsored app install mission campaign",
+      "type": "object",
+      "properties": {
+        "visibility": { "type": "string", "enum": ["public", "admin"] },
+        "appName": { "type": "string" },
+        "packageName": { "type": "string" },
+        "playStoreUrl": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "fullInstructions": { "type": "string" },
+        "totalReward": { "type": "integer" },
+        "estimatedMinutes": { "type": "integer" },
+        "status": { "type": "string", "enum": ["draft", "scheduled", "live", "paused", "archived", "removed"] },
+        "categoryLabel": { "type": "string" },
+        "verificationMethod": { "type": "string", "enum": ["attribution", "offerwall", "manual", "none"] },
+        "sponsorDisclosure": { "type": "string" },
+        "slotsRemaining": { "type": "integer" },
+        "dailyLimit": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["visibility", "appName", "packageName", "playStoreUrl", "shortDescription", "fullInstructions", "totalReward", "estimatedMinutes", "status", "categoryLabel", "verificationMethod", "sponsorDisclosure", "slotsRemaining", "dailyLimit", "createdAt", "updatedAt"]
+    },
+    "TaskClaim": {
+      "title": "TaskClaim",
+      "description": "User claim for an app milestone, daily task, quiz, or referral",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "taskType": { "type": "string" },
+        "taskId": { "type": "string" },
+        "campaignId": { "type": "string" },
+        "title": { "type": "string" },
+        "rewardCoins": { "type": "integer" },
+        "progress": { "type": "integer" },
+        "verificationStatus": { "type": "string", "enum": ["submitted", "verification_pending", "approved", "rejected"] },
+        "evidenceHash": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "taskType", "taskId", "campaignId", "title", "rewardCoins", "progress", "verificationStatus", "createdAt", "updatedAt"]
+    },
+    "VideoCampaign": {
+      "title": "VideoCampaign",
+      "description": "YouTube watch and discovery campaign",
+      "type": "object",
+      "properties": {
+        "visibility": { "type": "string", "enum": ["public", "admin"] },
+        "youtubeVideoId": { "type": "string" },
+        "canonicalUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "channelName": { "type": "string" },
+        "description": { "type": "string" },
+        "rewardMode": { "type": "string", "enum": ["discovery_only", "verifiable"] },
+        "rewardCoins": { "type": "integer" },
+        "minWatchSeconds": { "type": "integer" },
+        "status": { "type": "string", "enum": ["live", "paused", "hidden"] },
+        "reportsCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["visibility", "youtubeVideoId", "canonicalUrl", "title", "channelName", "description", "rewardMode", "rewardCoins", "minWatchSeconds", "status", "reportsCount", "createdAt"]
+    },
+    "PuzzleAttempt": {
+      "title": "PuzzleAttempt",
+      "description": "Validated puzzle game attempt and anti-cheat log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "gameId": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "score": { "type": "integer" },
+        "movesCount": { "type": "integer" },
+        "durationSeconds": { "type": "integer" },
+        "seedToken": { "type": "string" },
+        "serverVerified": { "type": "boolean" },
+        "rewardCoins": { "type": "integer" },
+        "adBonusClaimed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "gameId", "category", "difficulty", "score", "movesCount", "durationSeconds", "seedToken", "serverVerified", "rewardCoins", "adBonusClaimed", "createdAt"]
+    },
+    "AdSession": {
+      "title": "AdSession",
+      "description": "Single-use Unity rewarded ad session",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "placementId": { "type": "string" },
+        "status": { "type": "string", "enum": ["issued", "displayed", "completed", "verification_pending", "approved", "rejected", "failed"] },
+        "testMode": { "type": "boolean" },
+        "rewardCoins": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "placementId", "status", "testMode", "rewardCoins", "createdAt", "updatedAt"]
+    },
+    "RewardCatalogItem": {
+      "title": "RewardCatalogItem",
+      "description": "Google Play gift-code reward store catalogue item",
+      "type": "object",
+      "properties": {
+        "visibility": { "type": "string", "enum": ["public", "admin"] },
+        "rewardName": { "type": "string" },
+        "denominationInr": { "type": "integer" },
+        "pointsCost": { "type": "integer" },
+        "availability": { "type": "string", "enum": ["available", "limited", "out_of_stock", "coming_soon"] },
+        "stockCount": { "type": "integer" },
+        "minAccountAgeDays": { "type": "integer" },
+        "region": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["visibility", "rewardName", "denominationInr", "pointsCost", "availability", "stockCount", "minAccountAgeDays", "region", "status", "updatedAt"]
+    },
+    "RedemptionRequest": {
+      "title": "RedemptionRequest",
+      "description": "User gift-code redemption request",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "rewardId": { "type": "string" },
+        "rewardName": { "type": "string" },
+        "denominationInr": { "type": "integer" },
+        "pointsReserved": { "type": "integer" },
+        "status": { "type": "string", "enum": ["pending", "approved", "delivered", "rejected"] },
+        "deliveredCodeMasked": { "type": "string" },
+        "rejectionReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rewardId", "rewardName", "denominationInr", "pointsReserved", "status", "createdAt", "updatedAt"]
+    },
+    "RedeemCodeInfo": {
+      "title": "RedeemCodeInfo",
+      "description": "Community Free Fire / FF MAX redeem code info card",
+      "type": "object",
+      "properties": {
+        "visibility": { "type": "string", "enum": ["public", "admin"] },
+        "code": { "type": "string" },
+        "title": { "type": "string" },
+        "rewardDescription": { "type": "string" },
+        "region": { "type": "string" },
+        "game": { "type": "string", "enum": ["FF", "FF_MAX"] },
+        "expiryLabel": { "type": "string" },
+        "sourceReference": { "type": "string" },
+        "verificationStatus": { "type": "string", "enum": ["verified", "unverified", "expired", "hidden"] },
+        "reportsCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["visibility", "code", "title", "rewardDescription", "region", "game", "expiryLabel", "sourceReference", "verificationStatus", "reportsCount", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "User support ticket, content report, or redemption dispute",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "category": { "type": "string" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "linkedRedemptionId": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "in_review", "resolved", "closed"] },
+        "adminReply": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "category", "subject", "message", "status", "createdAt", "updatedAt"]
+    },
+    "AdminAuditLog": {
+      "title": "AdminAuditLog",
+      "description": "Immutable admin action audit log",
+      "type": "object",
+      "properties": {
+        "adminUid": { "type": "string" },
+        "action": { "type": "string" },
+        "targetType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "reason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["adminUid", "action", "targetType", "targetId", "reason", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document"
+    },
+    "/users/{userId}/wallets/{walletId}": {
+      "schema": { "$ref": "#/entities/Wallet" },
+      "description": "User coin wallet summary"
+    },
+    "/users/{userId}/ledger/{txId}": {
+      "schema": { "$ref": "#/entities/LedgerEntry" },
+      "description": "User immutable reward ledger"
+    },
+    "/users/{userId}/idempotency/{key}": {
+      "schema": { "$ref": "#/entities/IdempotencyRecord" },
+      "description": "User-scoped idempotency lock"
+    },
+    "/users/{userId}/taskClaims/{claimId}": {
+      "schema": { "$ref": "#/entities/TaskClaim" },
+      "description": "User mission and task claims"
+    },
+    "/users/{userId}/puzzleAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/PuzzleAttempt" },
+      "description": "User puzzle attempts"
+    },
+    "/users/{userId}/adSessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/AdSession" },
+      "description": "User Unity ad sessions"
+    },
+    "/users/{userId}/redemptions/{redemptionId}": {
+      "schema": { "$ref": "#/entities/RedemptionRequest" },
+      "description": "User gift-code redemptions"
+    },
+    "/idempotency/{key}": {
+      "schema": { "$ref": "#/entities/IdempotencyRecord" },
+      "description": "Global idempotency index"
+    },
+    "/appCampaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/AppCampaign" },
+      "description": "Public app install campaigns"
+    },
+    "/videoCampaigns/{videoId}": {
+      "schema": { "$ref": "#/entities/VideoCampaign" },
+      "description": "YouTube watch & discovery campaigns"
+    },
+    "/rewards/{rewardId}": {
+      "schema": { "$ref": "#/entities/RewardCatalogItem" },
+      "description": "Gift-code rewards store catalogue"
+    },
+    "/redeemCodes/{codeId}": {
+      "schema": { "$ref": "#/entities/RedeemCodeInfo" },
+      "description": "Community Free Fire redeem codes"
+    },
+    "/tickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicket" },
+      "description": "User support and dispute tickets"
+    },
+    "/adminAuditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AdminAuditLog" },
+      "description": "Immutable admin audit log"
+    }
+  }
+}

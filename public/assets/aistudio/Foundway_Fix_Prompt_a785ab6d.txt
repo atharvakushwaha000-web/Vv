@@ -1,0 +1,73 @@
+FOUNDWAY REWARDS APP: FIX + REDESIGN PROMPT (give this to your AI coding agent)
+=====================================================================
+Read ALL of it first. Keep every feature that already works. Do not invent IDs, keys, codes or inventory. If something is missing, list it at the end under "MISSING".
+
+0. APP IDENTITY
+- App name shown everywhere: "Foundway" (spelled exactly like this). Tagline: "Play. Earn. Redeem."
+- Use the supplied logo files (logo/logo.svg, logo_512.png, logo_1024.png) as app icon, splash and header mark. Remove the old logo and old name ("Athxo Booya / VaultGold") everywhere.
+- Independent, unofficial app. No Garena / Free Fire / Google / YouTube branding claims.
+
+1. REAL PROBLEMS TO FIX (in this order)
+1.1 LAG: the UI is slow. Remove debug text, avoid re-rendering the whole screen on every state change, lazy-load screens and images, memoize lists, paginate long lists, no heavy shadows/blur, keep animations under 250 ms. Target: smooth 60 fps on a mid-range Android phone.
+1.2 PLATFORM CHECK (important): Unity Ads does NOT run inside a web/HTML preview (such as the AI Studio preview). If the app is HTML/web, the "Live Unity Ad" currently shown there is a simulation or a test placeholder, NOT a real ad. For real Unity ads the app must be a native Android build (Android Studio/Kotlin) or a Unity build, or a hybrid app with a native Unity Ads bridge. Detect the current platform, say clearly what it is, and build the ad layer behind an AdProvider interface (UnityAdProvider for Android, a clearly-labelled test provider for web).
+1.3 The Unity-branded ad the owner saw is the normal Unity TEST ad. Real third-party app ads appear only after test mode is turned OFF in a production build and Unity has fill. Never ship with test mode forced on.
+1.4 Login does not work properly: fix Firebase Auth (see section 2).
+
+2. LOGIN: GUEST MODE + GOOGLE
+- Add "Try as guest" using Firebase Anonymous Auth so the owner can test on a device without logging in each time.
+- Guests can use ALL features and earn coins (coins stored server-side under the anonymous uid, with a lower daily cap).
+- REDEEM requires Google sign-in. When a guest taps Redeem: show "Sign in with Google to redeem", then LINK the Google account to the same anonymous user (linkWithCredential) so coins are kept. Handle credential-already-in-use by asking the user which account to keep (never silently drop coins).
+- Guest button is controlled by a remote flag settings/guestEnabled (true now). Owner will switch it to false before public launch; no redeploy needed.
+- Also keep email login. Fix errors with readable messages.
+- Firebase project (existing, do not create a new one): projectId atharva-7ef4b, authDomain atharva-7ef4b.firebaseapp.com, databaseURL https://atharva-7ef4b-default-rtdb.firebaseio.com, storageBucket atharva-7ef4b.firebasestorage.app. MISSING (get from Firebase Console, never invent): apiKey, messagingSenderId, appId, plus SHA-1/SHA-256 for Google Sign-In on Android.
+
+3. UI REDESIGN (see ui/ reference images; match their look)
+- Dark violet-night background #14122B, cards #211E45 / #2B2759, coin gold #F5B83D, success mint #3DDCB0, alert coral #FF6B5E, brand violet #7C5CFF, text #F4F2FF, muted #9A96C8.
+- Font: one clean rounded sans (e.g. Plus Jakarta Sans / Poppins). Sentence case. Big readable numbers.
+- VERY LITTLE TEXT. Icon-first, square tiles. Max one short line of helper text per card. REMOVE all developer wording from the UI: "[V]", "[M]", "Anti-Cheat Signed Seed", "Server Seed", "Verified Solves", package names on cards, long sentences. Technical info goes only to Admin screens.
+- Bottom nav: Home, Play, Wallet, Me (Admin only visible to admin accounts).
+- Home: header (logo + name + coin chip), big coin card with Redeem + Daily button, 2x2 square tiles (PlaySkill, Videos, Games, Quiz), Watch Ad strip.
+- Every screen needs loading, empty, error and offline states.
+
+4. NEW SECTION: "PlaySkill" (Play Store app missions; replaces the old weak "Apps Install Handler" UI)
+- New card/tile on Home named PlaySkill. Inside: list of app cards (icon, name, "up to X coins", Open button). All campaigns are admin-managed (Admin panel, no code change).
+- Mission page: app icon, official Play Store button, numbered milestones each with its own coin value, e.g. Free Fire: Install +20, Open 0, Level 5 +100, Level 10 +120, Level 15 +260 (examples only, editable).
+- Each milestone has a "Submit proof" button -> screen to upload a screenshot (Firebase Storage, size/type limited, stored under the user's own path) + optional game ID. Status: Not started / In review / Approved / Rejected (with reason).
+- Honest wording: milestones are reviewed by an admin (or by an authorised attribution partner if one is integrated). Never say "auto-verified". Admin review queue shows the screenshot; duplicate screenshots (hash) are rejected; one reward per user per milestone.
+- NO Unity ad is triggered by anything in PlaySkill (opening Play Store, installing, submitting proof). Coins are credited by the server after approval.
+
+5. NEW SECTION: Videos (YouTube tasks)
+- Square tile on Home -> list of admin-added videos (thumbnail, title, coins).
+- Reward is for WATCHING only, using the official YouTube player/app: X coins for watching at least N seconds where this can be verified in a policy-compliant way. If it cannot be verified, the video is shown as "no coins" discovery content.
+- DO NOT reward likes, subscribes or comments. Paying coins for likes/subscribes/comments is prohibited manipulation of YouTube engagement and can get the app and the owner's accounts banned. Keep that out of the app and the admin panel.
+- No Unity ad is triggered by opening or watching a video. Keep coin values small.
+
+6. PANDA GAME (make it harder)
+- Pandas are shown for exactly 1 second (admin-configurable, default 1000 ms), then all crates hide; player must tap the 3 panda spots, avoiding bombs. Randomise positions each round on the server-issued seed.
+- On win the app shows "Claim reward" (see section 7). Coins are NEVER auto-credited. Keep reward small (e.g. 3 to 6 coins, admin-set) and add a daily play limit.
+- Other puzzles keep their server-side validation. Fix the awkward cut-off button text.
+
+7. CLAIM-WITH-AD FLOW (owner's choice, applies to game/quiz/daily rewards)
+- After a valid win/task the screen shows: "{N} coins ready" + button "Watch ad to claim". Tapping starts ONE Unity rewarded ad (placement below).
+- Ad completed -> backend credits the coins exactly once. Ad closed early / failed / no fill -> no coins, show "Try again", and the reward stays claimable for 10 minutes (so a no-fill never costs the user their win).
+- Show the rule BEFORE the user taps ("Watch a short ad to claim"). One ad per tap. Never chain ads. Always keep a small "Skip" that forfeits nothing except the pending claim after its timer.
+- Where this is used: Panda game, other puzzles, Daily check-in, Quiz, Spin/bonus tasks, Watch Ad & Earn (1 coin per ad). Not used in: PlaySkill, Videos.
+- Do NOT show interstitial ads on ordinary taps/navigation. Interstitials stay OFF by default (policy risk). Rewarded ads only.
+
+8. UNITY ADS CONFIG (owner-supplied, verify before production)
+- Android Game ID: 800370914 (belongs to the MindFlow project in the Unity dashboard). Rewarded placement: BP_Rewarded_Android. Copy exactly from the dashboard.
+- Use TEST MODE only until the owner confirms this app is registered under that Unity project or creates its own project/Game ID/placement for Foundway. Mixing two apps under one Game ID can break reporting and trigger policy problems.
+- Initialize once at start, preload, reload after each show. States: unavailable, loading, ready, showing, completed, pending verification, approved, rejected, failed. 
+- Coin credit only through the server (Cloud Function). Use Unity server-to-server callback if enabled; otherwise use single-use ad sessions + time/limit checks and document the remaining trust gap. Per-day caps are admin-configurable.
+
+9. COINS, WALLET, REDEEM (unchanged rules from the master prompt)
+- Client never writes balances. All coin changes go through Cloud Functions with idempotency keys and a ledger. Keep coin values LOW so the economy is sustainable: ads pay fractions of a rupee, gift codes cost real money. Redemption stays admin/inventory controlled; show a reward only if real stock exists.
+
+10. SECURITY
+- Realtime Database rules deny by default; users read only their own data; wallets/ledger/redemptions are server-write only; roles via custom claims; App Check on. No service-account keys in the client.
+
+11. TESTS BEFORE YOU SAY "DONE"
+Guest login + Google link keeps coins; redeem blocked for guests; panda shows 1 s then hides; win shows Claim; closing ad early gives 0 coins; completed ad gives exactly +N once; replaying the same event gives 0; PlaySkill proof upload -> admin approve -> coins once; no ad fires from PlaySkill/Videos; no developer text visible; scroll stays smooth on a mid-range phone.
+
+12. DELIVERABLE REPORT
+List what works (with test evidence), what is partial, and MISSING items: apiKey/messagingSenderId/appId, SHA fingerprints, Unity project confirmation, S2S secret, Blaze plan, attribution partner (optional), gift-code supplier.

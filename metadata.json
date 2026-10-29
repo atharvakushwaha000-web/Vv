@@ -1,0 +1,6 @@
+{
+  "name": "Athxo Booyah",
+  "description": "Athxo Booyah — Play. Create. Earn. Redeem. Official esports gaming rewards, 1v1 tournaments, creator studio, and verified gift-code store.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
